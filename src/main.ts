@@ -1,5 +1,4 @@
 // 导入依赖
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
   PerspectiveCamera,
   DirectionalLight,
@@ -17,6 +16,7 @@ import {
   RepeatWrapping,
   PlaneGeometry,
 } from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -25,7 +25,6 @@ import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
-
 import { Water } from 'three/addons/objects/Water.js';
 
 
