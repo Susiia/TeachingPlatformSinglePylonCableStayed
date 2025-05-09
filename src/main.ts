@@ -10,7 +10,12 @@ import {
   EquirectangularReflectionMapping,
   SRGBColorSpace,
   MeshStandardMaterial,
-  FogExp2
+  FogExp2,
+  ACESFilmicToneMapping,
+  Mesh,
+  Vector3,
+  RepeatWrapping,
+  PlaneGeometry,
 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -20,7 +25,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-import { Mesh } from "three";
+import { Water } from 'three/addons/objects/Water.js';
+
 
 
 // 创建场景
@@ -29,6 +35,9 @@ const scene = new Scene();
 scene.fog = new FogExp2(0xA3ADB7, 0.002);
 const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setAnimationLoop(update);
+renderer.toneMapping = ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1;
 document.body.appendChild(renderer.domElement);
 
 // 创建相机
@@ -78,6 +87,30 @@ const texture = _TextureLoader.load("/public/Textures/SkyBox.jpg", () => {
   scene.environmentIntensity = 1.5;
 });
 
+// 创建海洋
+const waterGeometry = new PlaneGeometry( 10000, 10000 );
+
+let water = new Water(
+  waterGeometry,
+  {
+    textureWidth: 512,
+    textureHeight: 512,
+    waterNormals: new TextureLoader().load( '/public/Textures/waternormals.jpg', function ( texture ) {
+      texture.wrapS = texture.wrapT = RepeatWrapping;
+    } ),
+    sunDirection: new Vector3(),
+    sunColor: 0xffffff,
+    waterColor: 0x19386b,
+    distortionScale: 3.7,
+    fog: scene.fog !== undefined
+  }
+);
+water.rotation.x = - Math.PI / 2;
+
+scene.add( water );
+
+
+
 // 声明海洋材质
 let oceanMaterial: MeshStandardMaterial | undefined;
 
@@ -99,8 +132,8 @@ _GLTFLoader.load(
   }
 );
 
-// 循环
-renderer.setAnimationLoop(update);
+
+
 
 // 创建后期处理合成器
 const composer = new EffectComposer(renderer);
@@ -152,5 +185,8 @@ function update() {
     const { map, normalMap } = oceanMaterial;
     map && (map.offset.y -= 0.0001);
     normalMap && (normalMap.offset.y += 0.0001);
+  }
+  if (water) {
+    water.material.uniforms['time'].value += 1.0 / 60.0;
   }
 }
