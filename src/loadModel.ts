@@ -13,9 +13,9 @@ import { Mesh, Scene, MeshStandardMaterial } from "three";
 export function loadModel(scene: Scene) {
   let oceanMaterial: MeshStandardMaterial | undefined;
   const _GLTFLoader = new GLTFLoader();
-  // 加载 GLB 模型
+  // 修改加载路径以加载 GLTF 模型，并添加加载进度回调
   _GLTFLoader.load(
-    "/public/Models/TeachingPlatformSinglePylonCableStayedModel.glb",
+    "/public/Models/GLTF/TeachingPlatformSinglePylonCableStayedModel.gltf",
     (gltf) => {
       // 遍历模型子对象
       gltf.scene.traverse((child) => {
@@ -26,7 +26,14 @@ export function loadModel(scene: Scene) {
       });
       scene.add(gltf.scene);
     },
-    undefined,
+    (xhr) => {
+      if (xhr.lengthComputable) {
+        const progress = (xhr.loaded / xhr.total) * 100;
+        console.log(`模型加载进度: ${progress.toFixed(2)}%`);
+      } else {
+        console.log(`模型正在加载中，请稍候... 已加载 ${xhr.loaded} 字节`);
+      }
+    },
     (error) => {
       console.error(error);
     }
