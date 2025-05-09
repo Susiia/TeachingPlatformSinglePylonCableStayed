@@ -1,185 +1,25 @@
-// 导入依赖
-import {
-  PerspectiveCamera,
-  DirectionalLight,
-  Vector2,
-  WebGLRenderer,
-  Scene,
-  TextureLoader,
-  EquirectangularReflectionMapping,
-  SRGBColorSpace,
-  MeshStandardMaterial,
-  FogExp2,
-  ACESFilmicToneMapping,
-  Mesh,
-  Vector3,
-  RepeatWrapping,
-  PlaneGeometry,
-} from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
-import { Water } from "three/addons/objects/Water.js";
+// 导入各模块功能函数
+import { setup } from "./setup";
+import { setupLights } from "./lights";
+import { setupEnvironment } from "./environment";
+import { loadModel } from "./loadModel";
+import { setupPostProcessing } from "./postProcessing";
+import { createUpdateFunction } from "./update";
 
-// 创建场景
-const scene = new Scene();
-scene.fog = new FogExp2(0xa3adb7, 0.002); // 雾
-const renderer = new WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+// 初始化场景、渲染器、相机和控制器
+const { scene, renderer, camera, controls } = setup();
+// 设置场景灯光
+setupLights(scene);
+// 设置环境并获取海洋相关对象
+const { water, oceanMaterial: envOceanMaterial } = setupEnvironment(scene);
+// 加载模型并获取海洋材质
+const oceanMaterial = loadModel(scene) || envOceanMaterial;
+// 设置后期处理
+const composer = setupPostProcessing(scene, camera, renderer);
+// 创建更新函数
+const update = createUpdateFunction(controls, composer, oceanMaterial, water);
+
+// 设置渲染循环
 renderer.setAnimationLoop(update);
-renderer.toneMapping = ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;
+// 将渲染器 DOM 元素添加到页面
 document.body.appendChild(renderer.domElement);
-
-// 创建相机
-const camera = new PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.5,
-  5000
-);
-camera.position.x = 50;
-camera.position.y = 50;
-camera.position.z = 50;
-
-// 创建相机控制器
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.25;
-controls.rotateSpeed = 0.5;
-controls.zoomSpeed = 1.2;
-controls.minDistance = 0.1;
-controls.maxDistance = 100;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.1;
-controls.enablePan = true;
-controls.enableZoom = true;
-controls.enableRotate = true;
-controls.enableDamping = true;
-
-// 添加天光
-// const _AmbientLight = new AmbientLight(0xffffff, 1);
-// scene.add(_AmbientLight);
-// 添加太阳光
-const _DirectionalLight = new DirectionalLight(0xffffff, 5);
-_DirectionalLight.position.set(300, 100, 0);
-scene.add(_DirectionalLight);
-// 可视化位置
-// const _DirectionalLightHelper = new THREE.DirectionalLightHelper(_DirectionalLight, 5);
-// scene.add(_DirectionalLightHelper);
-
-// 设置背景图
-const _TextureLoader = new TextureLoader();
-const texture = _TextureLoader.load("/public/Textures/SkyBox.jpg", () => {
-  texture.mapping = EquirectangularReflectionMapping;
-  texture.colorSpace = SRGBColorSpace;
-  scene.background = texture;
-  scene.environment = texture;
-  scene.environmentIntensity = 1.5;
-});
-
-// 创建海洋
-const waterGeometry = new PlaneGeometry(10000, 10000);
-
-let water = new Water(waterGeometry, {
-  textureWidth: 512,
-  textureHeight: 512,
-  waterNormals: new TextureLoader().load(
-    "/public/Textures/waternormals.jpg",
-    (texture) => {
-      texture.wrapS = texture.wrapT = RepeatWrapping;
-    }
-  ),
-  sunDirection: new Vector3(),
-  sunColor: 0xffffff,
-  waterColor: 0x19386b,
-  distortionScale: 3.7,
-  fog: scene.fog !== undefined,
-});
-water.rotation.x = -Math.PI / 2;
-
-scene.add(water);
-
-// 声明海洋材质
-let oceanMaterial: MeshStandardMaterial | undefined;
-
-// 导入模型
-const _GLTFLoader = new GLTFLoader();
-_GLTFLoader.load(
-  "/public/Models/TeachingPlatformSinglePylonCableStayedModel.glb",
-  (gltf) => {
-    gltf.scene.traverse((child) => {
-      if (child instanceof Mesh && child.material.name === "Ocean") {
-        oceanMaterial = child.material;
-      }
-    });
-    scene.add(gltf.scene);
-  },
-  undefined,
-  (error) => {
-    console.error(error);
-  }
-);
-
-// 创建后期处理合成器
-const composer = new EffectComposer(renderer);
-
-// 创建渲染通道
-const renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
-
-// 创建 SSAO 通道
-const ssaoPass = new SSAOPass(
-  scene,
-  camera,
-  window.innerWidth,
-  window.innerHeight
-);
-ssaoPass.kernelRadius = 16;
-composer.addPass(ssaoPass);
-
-// 创建虚幻辉光通道
-const bloomPass = new UnrealBloomPass(
-  new Vector2(window.innerWidth, window.innerHeight),
-  0.2,
-  0.4,
-  0.8
-);
-composer.addPass(bloomPass);
-
-// 创建 FXAA 通道
-const fxaaPass = new ShaderPass(FXAAShader);
-const pixelRatio = renderer.getPixelRatio();
-fxaaPass.material.uniforms["resolution"].value.x =
-  1 / (window.innerWidth * pixelRatio);
-fxaaPass.material.uniforms["resolution"].value.y =
-  1 / (window.innerHeight * pixelRatio);
-composer.addPass(fxaaPass);
-
-// 创建输出通道
-const outputPass = new OutputPass();
-composer.addPass(outputPass);
-
-// 更新函数
-function update() {
-  controls.update();
-  // renderer.render(scene, camera);
-  composer.render();
-  // UV动画模式
-  if (oceanMaterial) {
-    // 更新纹理偏移量
-    const { map, normalMap } = oceanMaterial;
-    map && (map.offset.y -= 0.0001);
-    normalMap && (normalMap.offset.y += 0.0001);
-  }
-  // 3js自带的水面
-  if (water) {
-    water.material.uniforms["time"].value += 1.0 / 60.0;
-  }
-}
