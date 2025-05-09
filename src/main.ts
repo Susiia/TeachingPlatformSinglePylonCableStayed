@@ -179,13 +179,14 @@ function update() {
   controls.update();
   // renderer.render(scene, camera);
   composer.render();
-  // 检查海洋材质是否存在
+  // UV动画模式
   if (oceanMaterial) {
     // 更新纹理偏移量
     const { map, normalMap } = oceanMaterial;
     map && (map.offset.y -= 0.0001);
     normalMap && (normalMap.offset.y += 0.0001);
   }
+  // 3js自带的水面
   if (water) {
     water.material.uniforms['time'].value += 1.0 / 60.0;
   }
