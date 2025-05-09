@@ -31,8 +31,7 @@ import { Water } from 'three/addons/objects/Water.js';
 
 // 创建场景
 const scene = new Scene();
-// 添加雾，颜色为白色，近裁剪面为 10，远裁剪面为 1000，可根据实际需求调整参数
-scene.fog = new FogExp2(0xA3ADB7, 0.002);
+scene.fog = new FogExp2(0xA3ADB7, 0.002);// 雾
 const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(update);
