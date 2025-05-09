@@ -4,14 +4,14 @@
  * @Author: 刘译蓬
  * @Date: 2025-05-09 14:35:54
  * @LastEditors: 刘译蓬
- * @LastEditTime: 2025-05-09 14:42:42
+ * @LastEditTime: 2025-05-09 14:45:20
  */
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { MeshStandardMaterial } from "three";
-
+import { Water } from "three/addons/objects/Water.js";
 // 创建更新函数
-export function createUpdateFunction(controls: OrbitControls, composer: EffectComposer, oceanMaterial: MeshStandardMaterial | undefined, water: any) {
+export function createUpdateFunction(controls: OrbitControls, composer: EffectComposer, oceanMaterial: MeshStandardMaterial | undefined, water: Water) {
   return function update() {
     // 更新相机控制器
     controls.update();
