@@ -30,7 +30,10 @@ import { Water } from "three/addons/objects/Water.js";
 // 创建场景
 const scene = new Scene();
 scene.fog = new FogExp2(0xa3adb7, 0.002); // 雾
-const renderer = new WebGLRenderer();
+const renderer = new WebGLRenderer({
+  antialias: true,
+});
+renderer.setPixelRatio(2);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(update);
 renderer.toneMapping = ACESFilmicToneMapping;
@@ -104,7 +107,7 @@ let water = new Water(waterGeometry, {
 });
 water.rotation.x = -Math.PI / 2;
 
-scene.add(water);
+// scene.add(water);
 
 // 声明海洋材质
 let oceanMaterial: MeshStandardMaterial | undefined;
@@ -175,8 +178,8 @@ function update() {
   if (oceanMaterial) {
     // 更新纹理偏移量
     const { map, normalMap } = oceanMaterial;
-    map && (map.offset.y -= 0.0001);
-    normalMap && (normalMap.offset.y += 0.0001);
+    map && (map.offset.y -= 0.0005);
+    normalMap && (normalMap.offset.y += 0.0005);
   }
   // 3js自带的水面
   if (water) {
